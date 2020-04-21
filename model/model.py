@@ -99,10 +99,10 @@ class RGNModel(object):
             if arch['recurrent_nonlinear_out_proj_size'] is not None:
                 for key in ['recurrent_nonlinear_out_proj_init']:
                     if type(init[key]) is not list: init[key] = [init[key]] * len(arch['recurrent_nonlinear_out_proj_size'])
-            
+
             # regularization
-            for key in ['recurrent_input_keep_probability', 
-                        'recurrent_output_keep_probability', 
+            for key in ['recurrent_input_keep_probability',
+                        'recurrent_output_keep_probability',
                         'recurrent_keep_probability',
                         'recurrent_state_zonein_probability',
                         'recurrent_memory_zonein_probability',
@@ -117,29 +117,29 @@ class RGNModel(object):
             raise RuntimeError('Model already started; cannot create new objects.')
 
     def _create_graph(self, mode, config):
-        """ Creates TensorFlow computation graph 
+        """ Creates TensorFlow computation graph
 
             Creates a different model depending on whether mode is set to 'training' or 'evaluation'.
             The semantics are such that the head (default 'training' mode) model is the one
-            required for starting, training, and checkpointing. Additionally the user may create any 
-            number of 'evaluation' models that depend on the head model, but supplement it with 
-            additional data sets (and different model semantics (e.g. no dropout)) for the evaluation 
-            and logging of their performance. However a head model is always required, and it is the 
+            required for starting, training, and checkpointing. Additionally the user may create any
+            number of 'evaluation' models that depend on the head model, but supplement it with
+            additional data sets (and different model semantics (e.g. no dropout)) for the evaluation
+            and logging of their performance. However a head model is always required, and it is the
             only one that exposes the core methods for starting and training.
 
-            Note that the head model creates all variables, even ones it doesn't use, because it is 
+            Note that the head model creates all variables, even ones it doesn't use, because it is
             the one with the reuse=None semantics. Ops however are specific to each model type and
             so some ops are missing from the training model and vice-versa.
 
-            Almost all graph construction is done in this function, which relies on a number of 
-            private methods to do the actual construction. Methods internal to this class are ad hoc 
-            and thus not meant for general use--general methods are placed in separate *_ops python 
-            modules. Some parts of graph construction, namely summary ops, are done in the start 
+            Almost all graph construction is done in this function, which relies on a number of
+            private methods to do the actual construction. Methods internal to this class are ad hoc
+            and thus not meant for general use--general methods are placed in separate *_ops python
+            modules. Some parts of graph construction, namely summary ops, are done in the start
             method, to ensure that all models have been created.
 
             There are two types of internal (private, prefaced with _) variables stored in each
-            object. One are ops collections, like training_ops, evaluation_ops, etc. These are lists 
-            of ops that are run when the similarly named object method is called. As the graph is 
+            object. One are ops collections, like training_ops, evaluation_ops, etc. These are lists
+            of ops that are run when the similarly named object method is called. As the graph is
             built up, ops are added to these lists. The second type of variables are various nodes
             that are like TF methods, e.g. the initializer, saver, etc, which are stored in the
             object and are accessed by various methods when necessary.
@@ -165,7 +165,7 @@ class RGNModel(object):
             # Create curriculum state and tracking variables if needed.
             if config.curriculum['mode'] is not None:
                 # Variable to hold current curriculum iteration
-                curriculum_step = tf.get_variable(name='curriculum_step', shape=[], trainable=False, 
+                curriculum_step = tf.get_variable(name='curriculum_step', shape=[], trainable=False,
                                                   initializer=tf.constant_initializer(config.curriculum['base']))
                 if mode == 'training': diagnostic_ops.update({'curriculum_step': curriculum_step})
 
@@ -195,7 +195,7 @@ class RGNModel(object):
                 alphabet = None
 
             # Create recurrent layer(s) that translate primary sequences into internal representation
-            recurrence_config = merge_dicts(config.initialization, config.architecture, config.regularization, config.optimization, 
+            recurrence_config = merge_dicts(config.initialization, config.architecture, config.regularization, config.optimization,
                                             config.computing, config.io)
             recurrent_outputs, recurrent_states = _higher_recurrence(mode, recurrence_config, inputs, num_stepss, alphabet=alphabet)
 
@@ -212,7 +212,7 @@ class RGNModel(object):
                 coordinates = _coordinates(merge_dicts(config.computing, config.optimization, config.queueing), dihedrals)
                 drmsds = _drmsds(merge_dicts(config.optimization, config.loss, config.io), coordinates, tertiaries, weights)
 
-                if mode == 'evaluation': 
+                if mode == 'evaluation':
                     prediction_ops.update({'ids': ids, 'coordinates': coordinates, 'num_stepss': num_stepss, 'recurrent_states': recurrent_states})
 
             # Losses
@@ -229,8 +229,8 @@ class RGNModel(object):
                                 raise RuntimeError('Cannot use multiple invocations with training mode.')
                             else:
                                 # Compute tertiary loss quotient parts by reducing dRMSDs based on normalization behavior
-                                tertiary_loss_numerator, tertiary_loss_denominator = _reduce_loss_quotient(merge_dicts(config.loss, config.io, config.optimization), 
-                                                                                                           drmsds, masks, group_filter, 
+                                tertiary_loss_numerator, tertiary_loss_denominator = _reduce_loss_quotient(merge_dicts(config.loss, config.io, config.optimization),
+                                                                                                           drmsds, masks, group_filter,
                                                                                                            name_prefix='tertiary_loss')
 
                                 # Handles multiple invocations and gracefully degrades for single invocations.
@@ -260,7 +260,7 @@ class RGNModel(object):
 
                 # Curriculum loss history; not always used but design is much cleaner if always created.
                 curriculum_loss_history = tf.get_variable(
-                                              initializer=tf.constant_initializer([DUMMY_LOSS] * config.curriculum['change_num_iterations']), 
+                                              initializer=tf.constant_initializer([DUMMY_LOSS] * config.curriculum['change_num_iterations']),
                                               shape=[config.curriculum['change_num_iterations']], trainable=False, name='curriculum_loss_history')
                 if mode == 'evaluation' and config.curriculum['update_loss_history']:
                     update_curriculum_history_op = _history(config.io, curriculum_loss, curriculum_loss_history)
@@ -325,7 +325,7 @@ class RGNModel(object):
 
             # generate return dict
             predictions = {}
-            for id_, num_steps, tertiary, recurrent_states in izip_longest(*[prediction_dict.get(key, []) 
+            for id_, num_steps, tertiary, recurrent_states in izip_longest(*[prediction_dict.get(key, [])
                                                                            for key in ['ids', 'num_stepss', 'coordinates', 'recurrent_states']]):
                 prediction = {}
 
@@ -379,10 +379,10 @@ class RGNModel(object):
     def _start(self, evaluation_models, session=None, restore_if_checkpointed=True):
         """ Initializes model from scratch or loads state from disk.
             Must be run once (and only once) before model is used. """
-
+        print('RGNModel._is_started', RGNModel._is_started)
         if not RGNModel._is_started:
             # Checkpointing. Must be done here after all models have been instantiated, because evaluation models may introduce additional variables
-            self._saver = tf.train.Saver(max_to_keep=self.config.io['max_checkpoints'], 
+            self._saver = tf.train.Saver(max_to_keep=self.config.io['max_checkpoints'],
                                          keep_checkpoint_every_n_hours=self.config.io['checkpoint_every_n_hours'])
 
             # variable tracking and summarization. it has to be done here after all models have been instantiated
@@ -397,9 +397,9 @@ class RGNModel(object):
                     # additional detailed summaries for losses
                     for model_name in model_names:
                         for coll in ['scess', 'matches', 'drmsdss', tf.GraphKeys.ACTIVATIONS]:
-                            for node_or_named_output in tf.get_collection(model_name + '_' + coll): 
+                            for node_or_named_output in tf.get_collection(model_name + '_' + coll):
                                 if type(node_or_named_output) is tf.Tensor:
-                                    tf.summary.histogram(node_or_named_output.name, node_or_named_output, 
+                                    tf.summary.histogram(node_or_named_output.name, node_or_named_output,
                                                          collections=[model_name + '_' + tf.GraphKeys.SUMMARIES])
                                 elif type(node_or_named_output) is layers.utils.NamedOutputs:
                                     tf.summary.histogram(node_or_named_output[1].name, node_or_named_output[1],
@@ -407,7 +407,7 @@ class RGNModel(object):
 
                     # summaries for trainable variables and their activations
                     for var in tf.trainable_variables(): tf.summary.histogram(var.name, var)
-                    layers.summarize_activations()                
+                    layers.summarize_activations()
 
                 # add housekeeping training ops that merge and write summaries
                 self._summary_writer = tf.summary.FileWriter(self.config.io['logs_directory'])
@@ -445,6 +445,7 @@ class RGNModel(object):
                 tf.global_variables_initializer().run(session=session)
                 tf.local_variables_initializer().run(session=session)
             else:
+                print("Restoring from", self.config.io['checkpoints_directory'])
                 self._saver.restore(session, latest_checkpoint)
                 tf.local_variables_initializer().run(session=session)
 
@@ -475,7 +476,7 @@ class RGNModel(object):
 
     def _is_done(self):
         """ Returns True if training is finished, False otherwise. """
-        
+
         return self._coordinator.should_stop()
 
     def _current_step(self, session):
@@ -488,22 +489,22 @@ class RGNModel(object):
 
         self._coordinator.request_stop()
         self._coordinator.join(self._threads)
-        
+
         if save: self.save(session)
         if self.config.io['log_model_summaries']: self._summary_writer.close()
         if close_session: session.close()
         if reset_graph: tf.reset_default_graph()
-        
+
         RGNModel._num_models = 0
         RGNModel._is_started = False
 
         del self.train, self.diagnose, self.save, self.is_done, self.current_step, self.finish
 
 ### Private functions
-# These functions are meant strictly for internal use by RGNModel, and are 
-# generally quite ad hoc. For TF-based ones, they do not carry out proper scoping 
-# of their internals, as what they produce is meant to be dropped in the main TF 
-# graph. They are often stateful, producing TF variables that are used by other 
+# These functions are meant strictly for internal use by RGNModel, and are
+# generally quite ad hoc. For TF-based ones, they do not carry out proper scoping
+# of their internals, as what they produce is meant to be dropped in the main TF
+# graph. They are often stateful, producing TF variables that are used by other
 # parts of RGNModel. However their behavior is still transparent in the sense
 # that they're only passed parameters, not actual TF nodes or ops, and return
 # everything that needs to be acted upon by RGNModel. So they don't modify
@@ -547,7 +548,7 @@ def _dataflow(config, max_length):
     if config['shuffle']: # based on https://github.com/tensorflow/tensorflow/issues/5147#issuecomment-271086206
         dtypes = list(map(lambda x: x.dtype, inputs))
         shapes = list(map(lambda x: x.get_shape(), inputs))
-        randomizer_queue = tf.RandomShuffleQueue(capacity=config['batch_queue_capacity'], min_after_dequeue=config['min_after_dequeue'], 
+        randomizer_queue = tf.RandomShuffleQueue(capacity=config['batch_queue_capacity'], min_after_dequeue=config['min_after_dequeue'],
                                                  dtypes=dtypes, seed=config['queue_seed'], name='randomization_queue')
         randomizer_enqueue_op = randomizer_queue.enqueue(inputs)
         randomizer_qr = tf.train.QueueRunner(randomizer_queue, [randomizer_enqueue_op])
@@ -560,7 +561,7 @@ def _dataflow(config, max_length):
     if config['bucket_boundaries'] is not None:
         batch_fun = tf.contrib.training.bucket_by_sequence_length
         batch_kwargs = {'input_length': num_steps,
-                        'bucket_boundaries': config['bucket_boundaries'], 
+                        'bucket_boundaries': config['bucket_boundaries'],
                         'capacity': config['batch_queue_capacity'] / config['batch_size']}
         sel_slice = 1
     else:
@@ -569,21 +570,21 @@ def _dataflow(config, max_length):
         sel_slice = slice(len(inputs) - 1)
 
     # batching
-    inputs = batch_fun(tensors=list(inputs)[:-1], keep_input=keep, dynamic_pad=True, batch_size=config['batch_size'], 
+    inputs = batch_fun(tensors=list(inputs)[:-1], keep_input=keep, dynamic_pad=True, batch_size=config['batch_size'],
                        name='batching_queue', **batch_kwargs)
     ids, primaries_batch_major, evolutionaries_batch_major, secondaries_batch_major, tertiaries_batch_major, masks_batch_major, num_stepss = \
         inputs[sel_slice]
 
     # transpose to time_step major
-    primaries      = tf.transpose(primaries_batch_major,      perm=(1, 0, 2), name='primaries') 
+    primaries      = tf.transpose(primaries_batch_major,      perm=(1, 0, 2), name='primaries')
                      # primary sequences, i.e. one-hot sequences of amino acids.
                      # [NUM_STEPS, BATCH_SIZE, NUM_AAS]
 
-    evolutionaries = tf.transpose(evolutionaries_batch_major, perm=(1, 0, 2), name='evolutionaries') 
+    evolutionaries = tf.transpose(evolutionaries_batch_major, perm=(1, 0, 2), name='evolutionaries')
                      # evolutionary sequences, i.e. multi-dimensional evolutionary profiles of amino acid propensities.
                      # [NUM_STEPS, BATCH_SIZE, NUM_EVO_ENTRIES]
 
-    secondaries    = tf.transpose(secondaries_batch_major,    perm=(1, 0),    name='secondaries') 
+    secondaries    = tf.transpose(secondaries_batch_major,    perm=(1, 0),    name='secondaries')
                      # secondary sequences, i.e. sequences of DSSP classes.
                      # [NUM_STEPS, BATCH_SIZE]
 
@@ -616,21 +617,21 @@ def _inputs(config, primaries, evolutionaries):
     return inputs
 
 def _weights(config, masks, curriculum_step=None):
-    """ Returns dRMSD weights that mask meaningless (missing or longer than 
-        sequence residues) pairwise distances and incorporate the state of 
-        the curriculum to differentially weigh pairwise distances based on 
+    """ Returns dRMSD weights that mask meaningless (missing or longer than
+        sequence residues) pairwise distances and incorporate the state of
+        the curriculum to differentially weigh pairwise distances based on
         their proximity. """
 
     if config['atoms'] == 'c_alpha':
         if config['mode'] != 'loss':
-            # no loss-based curriculum, create fixed weighting matrix that weighs all distances equally. 
+            # no loss-based curriculum, create fixed weighting matrix that weighs all distances equally.
             # minus one factor is there because we ignore self-distances.
             flat_curriculum_weights = np.ones(config['num_steps'] - config['num_edge_residues'] - 1, dtype='float32')
 
         elif config['mode'] == 'loss' and curriculum_step is not None:
             # create appropriate weights based on curriculum parameters and current step.
-            flat_curriculum_weights = curriculum_weights(base=curriculum_step, 
-                                                         slope=config['slope'], 
+            flat_curriculum_weights = curriculum_weights(base=curriculum_step,
+                                                         slope=config['slope'],
                                                          max_seq_length=config['num_steps'] - config['num_edge_residues'])
         else:
             raise RuntimeError('Curriculum step tensor not supplied.')
@@ -642,8 +643,8 @@ def _weights(config, masks, curriculum_step=None):
         # create final weights by multiplying with masks and normalizing.
         mask_length = tf.shape(masks)[0]
         unnormalized_masked_weights = masks * unnormalized_weights[:mask_length, :mask_length, tf.newaxis]
-        masked_weights = tf.div(unnormalized_masked_weights, 
-                                tf.reduce_sum(unnormalized_masked_weights, axis=[0, 1]), 
+        masked_weights = tf.div(unnormalized_masked_weights,
+                                tf.reduce_sum(unnormalized_masked_weights, axis=[0, 1]),
                                 name='weights')
 
         return masked_weights, flat_curriculum_weights
@@ -664,7 +665,7 @@ def _higher_recurrence(mode, config, inputs, num_stepss, alphabet=None):
     # by this function is always just the recurrent outputs, not the other information, which is only used in intermediate layers.
     if config['higher_order_layers']:
         # higher-order recurrence that concatenates both directions and possibly additional outputs before sending to the next layer.
-        
+
         # prep
         layer_inputs = initial_inputs
         layers_recurrent_outputs = []
@@ -694,7 +695,7 @@ def _higher_recurrence(mode, config, inputs, num_stepss, alphabet=None):
 
                 # residual connections (only for recurrent outputs; other outputs are maintained but not wired in a residual manner)
                 # all recurrent layer sizes must be the same
-                if (residual_n >= 1) and ((layer_idx - residual_shift) % residual_n == 0) and (layer_idx >= residual_n + residual_shift):  
+                if (residual_n >= 1) and ((layer_idx - residual_shift) % residual_n == 0) and (layer_idx >= residual_n + residual_shift):
                     layer_recurrent_outputs = layer_recurrent_outputs + layers_recurrent_outputs[-residual_n]
                     print('residually wired layer ' + str(layer_idx - residual_n + 1) + ' to layer ' + str(layer_idx + 1))
 
@@ -738,7 +739,7 @@ def _higher_recurrence(mode, config, inputs, num_stepss, alphabet=None):
 
 def _recurrence(mode, config, inputs, num_stepss):
     """ Recurrent layer for transforming inputs (primary sequences) into an internal representation. """
-    
+
     is_training = (mode == 'training')
     reverse = lambda seqs: tf.reverse_sequence(seqs, num_stepss, seq_axis=0, batch_axis=1) # convenience function for sequence reversal
 
@@ -756,7 +757,7 @@ def _recurrence(mode, config, inputs, num_stepss):
 
     # fused mode vs. explicit dynamic rollout mode
     if 'Cudnn' in config['recurrent_unit']:
-        # cuDNN-based fusion; assumes all (lower-order) layers are of the same size (first layer size) and all input dropouts are the same 
+        # cuDNN-based fusion; assumes all (lower-order) layers are of the same size (first layer size) and all input dropouts are the same
         # (first layer one). Does not support peephole connections, and only supports input dropout as a form of regularization.
         layer_size = config['recurrent_layer_size'][0]
         num_layers = len(config['recurrent_layer_size'])
@@ -781,7 +782,7 @@ def _recurrence(mode, config, inputs, num_stepss):
         scopes = ['fw', 'bw'] if config['bidirectional'] else ['fw']
         for scope in scopes:
             with tf.variable_scope(scope):
-                rnn = cell(num_layers=num_layers, num_units=layer_size, direction=cudnn_rnn_ops.CUDNN_RNN_UNIDIRECTION, 
+                rnn = cell(num_layers=num_layers, num_units=layer_size, direction=cudnn_rnn_ops.CUDNN_RNN_UNIDIRECTION,
                            kernel_initializer=recurrent_init['base'], bias_initializer=recurrent_init['bias'], **dropout_kwargs)
                 inputs_directed = inputs if scope == 'fw' else reverse(inputs)
                 outputs_directed, (_, states_directed) = rnn(inputs_directed, training=is_training)
@@ -790,21 +791,21 @@ def _recurrence(mode, config, inputs, num_stepss):
                 states.append(states_directed)
         outputs = tf.concat(outputs, 2)
         states  = tf.concat(states, 2)[0]
-        
+
     else:
         # TF-based dynamic rollout
         if config['bidirectional']:
-            outputs, states = tf.nn.bidirectional_dynamic_rnn(cell_fw=_recurrent_cell(mode, config, recurrent_init, 'fw'), 
-                                                         cell_bw=_recurrent_cell(mode, config, recurrent_init, 'bw'), 
+            outputs, states = tf.nn.bidirectional_dynamic_rnn(cell_fw=_recurrent_cell(mode, config, recurrent_init, 'fw'),
+                                                         cell_bw=_recurrent_cell(mode, config, recurrent_init, 'bw'),
                                                          inputs=inputs, time_major=True, sequence_length=tf.to_int64(num_stepss),
                                                          dtype=tf.float32, swap_memory=True, parallel_iterations=config['num_recurrent_parallel_iters'])
             outputs = tf.concat(outputs, 2)
             states  = tf.concat(states,  2)
                       # [NUM_STEPS, BATCH_SIZE, 2 x RECURRENT_LAYER_SIZE]
-                      # outputs of recurrent layer over all time steps.        
+                      # outputs of recurrent layer over all time steps.
         else:
             outputs, states = tf.nn.dynamic_rnn(cell=_recurrent_cell(mode, config, recurrent_init),
-                                                inputs=inputs, time_major=True, sequence_length=num_stepss, 
+                                                inputs=inputs, time_major=True, sequence_length=num_stepss,
                                                 dtype=tf.float32, swap_memory=True, parallel_iterations=config['num_recurrent_parallel_iters'])
                               # [NUM_STEPS, BATCH_SIZE, RECURRENT_LAYER_SIZE]
                               # outputs of recurrent layer over all time steps.
@@ -826,13 +827,13 @@ def _recurrent_cell(mode, config, recurrent_init, name=''):
     cells = []
     for layer_idx, (layer_size, input_keep_prob, output_keep_prob, keep_prob, hidden_state_keep_prob, memory_cell_keep_prob) \
         in enumerate(zip(
-            config['recurrent_layer_size'], 
-            config['recurrent_input_keep_probability'], 
+            config['recurrent_layer_size'],
+            config['recurrent_input_keep_probability'],
             config['recurrent_output_keep_probability'],
             config['recurrent_keep_probability'],
-            config['recurrent_state_zonein_probability'], 
+            config['recurrent_state_zonein_probability'],
             config['recurrent_memory_zonein_probability'])):
-    
+
         # set context
         with tf.variable_scope('sublayer' + str(layer_idx) + (name if name is '' else '_' + name), initializer=recurrent_init['base']):
 
@@ -844,14 +845,14 @@ def _recurrent_cell(mode, config, recurrent_init, name=''):
                     cell = tf.nn.rnn_cell.GRUCell(num_units=layer_size, reuse=(not is_training))
                 elif case('LSTM'):
                     cell = tf.nn.rnn_cell.LSTMCell(num_units=layer_size, use_peepholes=config['recurrent_peepholes'],
-                                                   forget_bias=config['recurrent_forget_bias'], cell_clip=config['recurrent_threshold'], 
+                                                   forget_bias=config['recurrent_forget_bias'], cell_clip=config['recurrent_threshold'],
                                                    initializer=recurrent_init['base'], reuse=(not is_training))
                 elif case('LNLSTM'):
                     cell = tf.contrib.rnn.LayerNormBasicLSTMCell(num_units=layer_size, forget_bias=config['recurrent_forget_bias'],
                                                                  layer_norm=config['recurrent_layer_normalization'],
                                                                  dropout_keep_prob=keep_prob, reuse=(not is_training))
                 elif case('LSTMBlock'):
-                    cell = tf.contrib.rnn.LSTMBlockCell(num_units=layer_size, forget_bias=config['recurrent_forget_bias'], 
+                    cell = tf.contrib.rnn.LSTMBlockCell(num_units=layer_size, forget_bias=config['recurrent_forget_bias'],
                                                         use_peephole=config['recurrent_peepholes'])
 
             # wrap cell with zoneout
@@ -861,8 +862,8 @@ def _recurrent_cell(mode, config, recurrent_init, name=''):
 
             # if not just evaluation, then wrap cell in dropout
             if is_training and (input_keep_prob < 1 or output_keep_prob < 1 or keep_prob < 1):
-                cell = tf.nn.rnn_cell.DropoutWrapper(cell=cell, input_keep_prob=input_keep_prob, output_keep_prob=output_keep_prob, 
-                                                     state_keep_prob=keep_prob, variational_recurrent=config['recurrent_variational_dropout'], 
+                cell = tf.nn.rnn_cell.DropoutWrapper(cell=cell, input_keep_prob=input_keep_prob, output_keep_prob=output_keep_prob,
+                                                     state_keep_prob=keep_prob, variational_recurrent=config['recurrent_variational_dropout'],
                                                      seed=config['dropout_seed'])
 
             # add to collection
@@ -884,41 +885,42 @@ def _alphabet(mode, config):
         alphabet_initializer = tf.constant_initializer(config['alphabet']) # user-defined alphabet
     else:
         alphabet_initializer = dict_to_init(config['alphabet_init'], config['alphabet_seed']) # random initialization
-
+    print('alphabet_initializer')
+    print(alphabet_initializer)
     # alphabet variable, possibly trainable
     alphabet = tf.get_variable(name='alphabet',
                                shape=[config['alphabet_size'], NUM_DIHEDRALS],
                                initializer=alphabet_initializer,
                                trainable=config['alphabet_trainable']) # [OUTPUT_SIZE, NUM_DIHEDRALS]
-    if mode == 'training' and config['alphabet_trainable']: 
+    if mode == 'training' and config['alphabet_trainable']:
         tf.add_to_collection(tf.GraphKeys.WEIGHTS, alphabet) # add to WEIGHTS collection if trainable
 
     return alphabet
 
 def _dihedrals(mode, config, inputs, alphabet=None):
     """ Converts internal representation resultant from RNN output activations
-        into dihedral angles based on one of many methods. 
+        into dihedral angles based on one of many methods.
 
-        The optional argument alphabet does not determine whether an alphabet 
+        The optional argument alphabet does not determine whether an alphabet
         should be created or not--that's controlled by config. Instead the
         option allows the reuse of an existing alphabet. """
-    
+
     is_training = (mode == 'training')
 
     # output size for linear transform layer (OUTPUT_SIZE)
     output_size = config['alphabet_size'] if config['is_alphabetized'] else NUM_DIHEDRALS
-    
+
     # set up non-linear dihedrals layer(s) if requested
     nonlinear_out_proj_size = config['recurrent_nonlinear_out_proj_size']
     if nonlinear_out_proj_size is not None:
         if config['recurrent_nonlinear_out_proj_normalization'] == 'batch_normalization':
             nonlinear_out_proj_normalization_fn = layers.batch_norm
-            nonlinear_out_proj_normalization_fn_opts = {'center': True, 'scale': True, 'decay': 0.9, 'epsilon': 0.001, 
-                                                        'is_training': tf.constant(is_training), 'scope': 'nonlinear_out_proj_batch_norm', 
+            nonlinear_out_proj_normalization_fn_opts = {'center': True, 'scale': True, 'decay': 0.9, 'epsilon': 0.001,
+                                                        'is_training': tf.constant(is_training), 'scope': 'nonlinear_out_proj_batch_norm',
                                                         'outputs_collections': config['name'] + '_' + tf.GraphKeys.ACTIVATIONS}
         elif config['recurrent_nonlinear_out_proj_normalization'] == 'layer_normalization':
             nonlinear_out_proj_normalization_fn = layers.layer_norm
-            nonlinear_out_proj_normalization_fn_opts = {'center': True, 'scale': True, 'scope': 'nonlinear_out_proj_layer_norm', 
+            nonlinear_out_proj_normalization_fn_opts = {'center': True, 'scale': True, 'scope': 'nonlinear_out_proj_layer_norm',
                                                         'outputs_collections': config['name'] + '_' + tf.GraphKeys.ACTIVATIONS}
         else:
             nonlinear_out_proj_normalization_fn = None
@@ -929,13 +931,13 @@ def _dihedrals(mode, config, inputs, alphabet=None):
         outputs = inputs
         for idx, (layer_size, init) in enumerate(zip(nonlinear_out_proj_size, config['recurrent_nonlinear_out_proj_init'])):
             recurrent_nonlinear_out_proj_init = dict_to_inits(init, config['recurrent_nonlinear_out_proj_seed'])
-            outputs = layers.fully_connected(outputs, layer_size, scope='nonlinear_dihedrals_' + str(idx), 
-                                             activation_fn=nonlinear_out_proj_fn, 
-                                             normalizer_fn=nonlinear_out_proj_normalization_fn, 
+            outputs = layers.fully_connected(outputs, layer_size, scope='nonlinear_dihedrals_' + str(idx),
+                                             activation_fn=nonlinear_out_proj_fn,
+                                             normalizer_fn=nonlinear_out_proj_normalization_fn,
                                              normalizer_params=nonlinear_out_proj_normalization_fn_opts,
-                                             weights_initializer=recurrent_nonlinear_out_proj_init['base'], 
-                                             biases_initializer=recurrent_nonlinear_out_proj_init['bias'], 
-                                             outputs_collections=config['name'] + '_' + tf.GraphKeys.ACTIVATIONS, 
+                                             weights_initializer=recurrent_nonlinear_out_proj_init['base'],
+                                             biases_initializer=recurrent_nonlinear_out_proj_init['bias'],
+                                             outputs_collections=config['name'] + '_' + tf.GraphKeys.ACTIVATIONS,
                                              variables_collections={'weights': [tf.GraphKeys.WEIGHTS], 'biases': [tf.GraphKeys.BIASES]})
         dihedrals_inputs = outputs
         # [NUM_STEPS, BATCH_SIZE, NONLINEAR_DIHEDRALS_LAYER_SIZE]
@@ -947,7 +949,7 @@ def _dihedrals(mode, config, inputs, alphabet=None):
     recurrent_out_proj_init = dict_to_inits(config['recurrent_out_proj_init'], config['recurrent_out_proj_seed'])
     linear = layers.fully_connected(dihedrals_inputs, output_size, activation_fn=None, scope='linear_dihedrals',
                                     weights_initializer=recurrent_out_proj_init['base'], biases_initializer=recurrent_out_proj_init['bias'],
-                                    variables_collections={'weights': [tf.GraphKeys.WEIGHTS], 'biases': [tf.GraphKeys.BIASES]}, 
+                                    variables_collections={'weights': [tf.GraphKeys.WEIGHTS], 'biases': [tf.GraphKeys.BIASES]},
                                     outputs_collections=config['name'] + '_' + tf.GraphKeys.ACTIVATIONS)
              # [NUM_STEPS, BATCH_SIZE, OUTPUT_SIZE]
 
@@ -961,7 +963,7 @@ def _dihedrals(mode, config, inputs, alphabet=None):
 
         # batch or layer normalize linear inputs to softmax (stats are computed over all batches and timesteps, effectively flattened)
         if config['alphabet_normalization'] == 'batch_normalization':
-            linear = layers.batch_norm(linear, center=True, scale=True, decay=0.999, epsilon=0.001, is_training=tf.constant(is_training), 
+            linear = layers.batch_norm(linear, center=True, scale=True, decay=0.999, epsilon=0.001, is_training=tf.constant(is_training),
                                        scope='alphabet_batch_norm', outputs_collections=config['name'] + '_' + tf.GraphKeys.ACTIVATIONS)
         elif config['alphabet_normalization'] == 'layer_normalization':
             linear = layers.layer_norm(linear, center=True, scale=True,
@@ -969,7 +971,7 @@ def _dihedrals(mode, config, inputs, alphabet=None):
 
         # softmax for linear to create angle mixtures
         flattened_linear = tf.reshape(linear, [-1, output_size])                               # [NUM_STEPS x BATCH_SIZE, OUTPUT_SIZE]
-        probs = tf.nn.softmax(flattened_linear / config['alphabet_temperature'], name='probs') # [NUM_STEPS x BATCH_SIZE, OUTPUT_SIZE]      
+        probs = tf.nn.softmax(flattened_linear / config['alphabet_temperature'], name='probs') # [NUM_STEPS x BATCH_SIZE, OUTPUT_SIZE]
         tf.add_to_collection(config['name'] + '_' + tf.GraphKeys.ACTIVATIONS, probs)
 
         # dropout alphabet if specified. I don't renormalize since final angle is invariant wrt overall scale.
@@ -999,16 +1001,16 @@ def _coordinates(config, dihedrals):
 
     # converts dihedrals to points ready for reconstruction.
     points = dihedral_to_point(dihedrals) # [NUM_STEPS x NUM_DIHEDRALS, BATCH_SIZE, NUM_DIMENSIONS]
-             
+
     # converts points to final 3D coordinates.
-    coordinates = point_to_coordinate(points, num_fragments=config['num_reconstruction_fragments'], 
-                                              parallel_iterations=config['num_reconstruction_parallel_iters']) 
+    coordinates = point_to_coordinate(points, num_fragments=config['num_reconstruction_fragments'],
+                                              parallel_iterations=config['num_reconstruction_parallel_iters'])
                   # [NUM_STEPS x NUM_DIHEDRALS, BATCH_SIZE, NUM_DIMENSIONS]
 
     return coordinates
 
 def _drmsds(config, coordinates, targets, weights):
-    """ Computes reduced weighted dRMSD loss (as specified by weights) 
+    """ Computes reduced weighted dRMSD loss (as specified by weights)
         between predicted tertiary structures and targets. """
 
     # lose end residues if desired
@@ -1019,7 +1021,7 @@ def _drmsds(config, coordinates, targets, weights):
     if config['atoms'] == 'c_alpha': # starts at 1 because c_alpha atoms are the second atoms
         coordinates = coordinates[1::NUM_DIHEDRALS] # [NUM_STEPS - NUM_EDGE_RESIDUES, BATCH_SIZE, NUM_DIMENSIONS]
         targets     =     targets[1::NUM_DIHEDRALS] # [NUM_STEPS - NUM_EDGE_RESIDUES, BATCH_SIZE, NUM_DIMENSIONS]
-                  
+
     # compute per structure dRMSDs
     drmsds = drmsd(coordinates, targets, weights, name='drmsds') # [BATCH_SIZE]
 
@@ -1101,8 +1103,8 @@ def _training(config, loss):
 
     # select appropriate optimization function and construct arg list based on config
     optimizer_func = {'steepest': tf.train.GradientDescentOptimizer, # doesn't support momentum, unlike autograd
-                      'rmsprop': tf.train.RMSPropOptimizer, 
-                      'adam': tf.train.AdamOptimizer, 
+                      'rmsprop': tf.train.RMSPropOptimizer,
+                      'adam': tf.train.AdamOptimizer,
                       'momentum': tf.train.MomentumOptimizer,
                       'adagrad': tf.train.AdagradOptimizer,
                       'adadelta': tf.train.AdadeltaOptimizer}[config['optimizer']]
@@ -1142,7 +1144,7 @@ def _history(config, loss, loss_history=None, scaling_factor=LOSS_SCALING_FACTOR
     new_history = tf.concat([loss_history[1:], [loss * scaling_factor]], 0)
     with tf.control_dependencies([new_history]):
         update_op = tf.assign(loss_history, new_history, name='update_curriculum_history_op')
-                                
+
     return update_op
 
 def _curriculum(config, step, loss_history, dependency_ops):
