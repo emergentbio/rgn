@@ -1,0 +1,20 @@
+{
+    "version": "0.1",
+    "collections": [
+        {
+            "title": "***title of repo***",
+            "description": "***insert description of repo***",
+            "sections": [
+                {
+                    "title": "***collection***",
+                    "topics":[
+                        {}
+
+                    ]
+                }
+                    ]
+                }
+            ]
+        }
+    ]
+}
