@@ -19,10 +19,10 @@ def main():
 
     files = glob.glob("/d/rgn_processing/fasta_files/*.fasta")
 
-    if False:
+    if True:
         for k in range(len(files)):
             f = files[k]
-            process_file(f, k)
+            process_file(f, k, len(files))
     else:
         Parallel(n_jobs=multiprocessing.cpu_count() / 4)(delayed(process_file)(files[k], k, len(files)) for k in range(len(files)))
 

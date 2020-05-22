@@ -204,6 +204,10 @@ def predict(args):
             pred = predict_tertiary(configs, models, session)
             if pred is not None:
                 idx, tertiary = pred
+
+                print("saving tertiary to " + args.input_file + ".npy")
+                np.save(args.input_file + ".npy", tertiary)
+
                 result[idx] = tertiary
     except tf.errors.OutOfRangeError:
         pass
@@ -247,4 +251,3 @@ if __name__ == "__main__":
 
     result = predict(args)
     print(result)
-    np.save(args.input_file + ".npy", result['test protein'])
