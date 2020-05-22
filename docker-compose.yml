@@ -1,0 +1,19 @@
+version: '2.3'
+
+services:
+ nvidia-image:
+  runtime: nvidia
+# based on Dockerfile with proctile
+#  image: tensorflow:18.12-py2-proctile
+
+#  build: .
+  build:
+   context: .
+   dockerfile: Dockerfile
+   args:
+     buildno: 1
+  environment:
+    - NVIDIA_VISIBLE_DEVICES=all
+  volumes:
+  - ".:/app:rw"
+  - "/d/datasets:/d/datasets:rw"
