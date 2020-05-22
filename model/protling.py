@@ -57,7 +57,6 @@ def predict(args):
 
     logs_dir = os.path.join(LOGS_DIRNAME, "")
 
-
     # this is all for evaluation models (including training, so training_batch_size is for evaluation)
     full_training_glob = args.input_file
     training_invocations = configs["run"].evaluation["num_training_invocations"]
@@ -72,16 +71,16 @@ def predict(args):
 
     # select device placement taking into consideration the interaction between training and evaluation models
     if (
-        configs["run"].computing["training_device"] == "GPU"
-        and configs["run"].computing["evaluation_device"] == "GPU"
+            configs["run"].computing["training_device"] == "GPU"
+            and configs["run"].computing["evaluation_device"] == "GPU"
     ):
         fod_training = {"/cpu:0": ["point_to_coordinate"]}
         fod_evaluation = {"/cpu:0": ["point_to_coordinate"]}
         dd_training = ""
         dd_evaluation = ""
     elif (
-        configs["run"].computing["training_device"] == "GPU"
-        and configs["run"].computing["evaluation_device"] == "CPU"
+            configs["run"].computing["training_device"] == "GPU"
+            and configs["run"].computing["evaluation_device"] == "CPU"
     ):
         fod_training = {"/cpu:0": ["point_to_coordinate", "loss_history"]}
         fod_evaluation = {}
@@ -217,6 +216,7 @@ def predict(args):
 
     return result
 
+
 # main
 if __name__ == "__main__":
     # parse command-line arguments
@@ -245,6 +245,6 @@ if __name__ == "__main__":
     args.config_file = path.join(path.dirname(__file__), ("../configurations/CASP%d.config" % args.config_num))
     args.gpu = "0"
 
-
     result = predict(args)
     print(result)
+    np.save(args.input_file + ".npy", result['test protein'])
