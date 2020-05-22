@@ -15,5 +15,8 @@ services:
   environment:
     - NVIDIA_VISIBLE_DEVICES=all
   volumes:
-  - ".:/app:rw"
-  - "/d/datasets:/d/datasets:rw"
+   - ".:/app:rw"
+   - "/d:/d:rw"
+   - "/home:/home:rw"
+  ports:
+   - "2222:22"
