@@ -22,7 +22,8 @@ def process_file(f, k, nfiles):
     print("python convert_to_tfrecord.py " + f + ".proteinnet " + f + ".tfrecord 42")
     os.system("python convert_to_tfrecord.py " + f + ".proteinnet " + f + ".tfrecord 42")
 
-    print("python ../model/protling.py --checkpoint /home/dev/RGN7/runs/CASP7/ProteinNet7Thinning90/checkpoints --input_file " + f + ".tfrecord")
+    print(
+                "python ../model/protling.py --checkpoint /home/dev/RGN7/runs/CASP7/ProteinNet7Thinning90/checkpoints --input_file " + f + ".tfrecord")
     os.system(
         "python ../model/protling.py --checkpoint /home/dev/RGN7/runs/CASP7/ProteinNet7Thinning90/checkpoints --input_file " + f + ".tfrecord")
 
@@ -37,10 +38,16 @@ def main():
         files2 = []
         for f in files:
             if os.path.exists(f + ".cinfo") and os.path.exists(f + ".icinfo"):
-                files2.append(f)
+                for extra in ["tblout", "a2m", "sto", "weighted.sto"]:
+                    extra_file = f + "." + extra
+                    if os.path.exists(extra_file):
+                        os.remove(f + "." + extra)
 
-                if len(files2) > 100:
-                    break
+                if not os.path.exists(f + ".tfrecord.npy"):
+                    files2.append(f)
+
+                    if len(files2) > 100:
+                        break
 
         print len(files)
 
