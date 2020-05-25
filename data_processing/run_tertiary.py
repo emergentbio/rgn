@@ -16,18 +16,26 @@ def process_file(f, k, nfiles):
 
     print f + " " + str(k) + " / " + str(nfiles)
 
-    print("python convert_to_proteinnet.py " + f)
-    os.system("python convert_to_proteinnet.py " + f)
+    cmd = "python convert_to_proteinnet.py " + f
+    print(cmd)
+    os.system(cmd)
 
-    print("python convert_to_tfrecord.py " + f + ".proteinnet " + f + ".tfrecord 42")
-    os.system("python convert_to_tfrecord.py " + f + ".proteinnet " + f + ".tfrecord 42")
+    if not os.path.exists(f + ".proteinnet"):
+        print("** " + f + ".proteinnet missing")
+        return
 
-    print(
-                "python ../model/protling.py --checkpoint /home/dev/RGN7/runs/CASP7/ProteinNet7Thinning90/checkpoints --input_file " + f + ".tfrecord")
-    os.system(
-        "python ../model/protling.py --checkpoint /home/dev/RGN7/runs/CASP7/ProteinNet7Thinning90/checkpoints --input_file " + f + ".tfrecord")
+    cmd = "python convert_to_tfrecord.py " + f + ".proteinnet " + f + ".tfrecord 42"
+    print(cmd)
+    os.system(cmd)
 
-    print "expected exists " + str(os.path.exists(f + ".tfrecord.npy"))
+    if os.path.exists(f + ".tfrecord"):
+        cmd = "python ../model/protling.py --checkpoint /home/dev/RGN7/runs/CASP7/ProteinNet7Thinning90/checkpoints --input_file " + f + ".tfrecord"
+        print(cmd)
+        os.system(cmd)
+    else:
+        print("missing " + f + ".tfrecord")
+
+    print "** " + f + ".tfrecord exists " + str(os.path.exists(f + ".tfrecord.npy"))
 
 
 def main():
@@ -38,24 +46,25 @@ def main():
         files2 = []
         for f in files:
             if os.path.exists(f + ".cinfo") and os.path.exists(f + ".icinfo"):
-                for extra in ["tblout", "a2m", "sto", "weighted.sto"]:
-                    extra_file = f + "." + extra
-                    if os.path.exists(extra_file):
-                        os.remove(f + "." + extra)
-
                 if not os.path.exists(f + ".tfrecord.npy"):
                     files2.append(f)
 
                     if len(files2) > 100:
                         break
 
+        files = files2
+
+        files.reverse()
+
         print len(files)
 
-        if len(files) == 0:
+        if len(files2) == 0:
             print "no files, sleeping 30 seconds"
             time.sleep(30)
 
-        if False:
+        sequential = False
+
+        if sequential:
             for k in range(len(files)):
                 f = files[k]
                 process_file(f, k, len(files))
