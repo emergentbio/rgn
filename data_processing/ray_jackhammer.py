@@ -41,32 +41,36 @@ def main():
     fasta_files = glob.glob("/d/rgn_processing/fasta_files/*.fasta")
     print(f"fasta files {len(fasta_files)}")
 
-    # all_files = set(glob.glob("/d/rgn_processing/fasta_files/*.fasta*"))
-    # print(f"all files {len(all_files)}")
+    pre_process = True
 
-    fasta_files.reverse()
+    if pre_process:
+        all_files = set(glob.glob("/d/rgn_processing/fasta_files/*.fasta*"))
+        print(f"all files {len(all_files)}")
 
-    files = fasta_files
-    # files = []
-    # for k, f in enumerate(fasta_files):
-    #     if k % 1000 == 0:
-    #         print(f"{k} / {len(files)}")
-    #
-    #     # if os.path.exists(f + ".cinfo") and os.path.exists(f + ".icinfo"):
-    #     #     continue
-    #
-    #     if (f + ".cinfo") in all_files and (f + ".icinfo") in all_files:
-    #         for extra in ["tblout", "a2m", "sto", "weighted.sto"]:
-    #             extra_file = f + "." + extra
-    #             if extra_file in all_files:
-    #                 try:
-    #                     os.remove(extra_file)
-    #                 except Exception:
-    #                     pass
-    #
-    #         continue
-    #
-    #     files.append(f)
+        files = []
+        for k, f in enumerate(fasta_files):
+            if k % 1000 == 0:
+                print(f"{k} / {len(fasta_files)}, files {len(files)}")
+
+            # if os.path.exists(f + ".cinfo") and os.path.exists(f + ".icinfo"):
+            #     continue
+
+            if (f + ".cinfo") in all_files and (f + ".icinfo") in all_files:
+                for extra in ["tblout", "a2m", "sto", "weighted.sto"]:
+                    extra_file = f + "." + extra
+                    if extra_file in all_files:
+                        try:
+                            os.remove(extra_file)
+                        except Exception:
+                            pass
+
+                continue
+
+            files.append(f)
+    else:
+        files = fasta_files
+
+    print(f"final files {len(files)}")
 
     sequential = False
     parallel = False
