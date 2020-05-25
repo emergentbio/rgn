@@ -174,6 +174,7 @@ def predict_and_log(log_dir, configs, models, session):
                     for idx, dict_ in dicts.iteritems():
                         if 'tertiary'  in dict_:
                             np.savetxt(os.path.join(outputs_dir, idx + '.tertiary'), dict_['tertiary'], header='\n')
+                            np.save(os.path.join(outputs_dir, idx + ".npy"), dict_['tertiary'])
                         if 'recurrent_states' in dict_:
                             np.savetxt(os.path.join(outputs_dir, idx + '.recurrent_states'), dict_['recurrent_states'])
 

@@ -1,0 +1,1 @@
+docker build . -t tensorflow:18.12-py2-setroctile
