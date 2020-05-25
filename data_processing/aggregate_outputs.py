@@ -30,7 +30,7 @@ def aggregate_outputs(files_path, out_path):
         # add to dataframe
         df = df.append({'uniprot_id': uniprot_id, 'coordinates': coords}, ignore_index=True)
     # save dataframe as parquet file
-    df.to_parquet(out_path, compression='gzip')
+    df.to_parquet(out_path, compression='snappy')
 
 
 if __name__ == "__main__":
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # parse command-line arguments
     parser = argparse.ArgumentParser(description="Aggregate RGN outputs into a parquet file.")
     parser.add_argument("-i", "--input_path", default='./', help="path to rgn output files to aggregate",)
-    parser.add_argument("-o", "--output_path", default='./rgn_output.parquet.gzip', help="output path for parquet file")
+    parser.add_argument("-o", "--output_path", default='./rgn_output.parquet', help="output path for parquet file")
     args = parser.parse_args()
     # run script
     aggregate_outputs(args.input_path, args.output_path)
