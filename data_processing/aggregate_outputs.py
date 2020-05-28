@@ -22,7 +22,10 @@ def aggregate_outputs(files_path, out_path):
     # for each file
     for file in files:
         # get uniprot id
-        uniprot_id = file.split('.')[0]
+        if '<unknown description>' in file:
+            uniprot_id = file.split(' ')[0]
+        else:
+            uniprot_id = file.split('.')[0]
         # load tertiary coordinates
         coords = np.load(os.path.join(files_path, file))
         # permute, flatten, convert to list
