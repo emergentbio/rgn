@@ -4,14 +4,18 @@ import os
 
 
 def process_file(f, k, nfiles):
-    log = ""
-    if not os.path.exists(f + ".cinfo") or not os.path.exists(f + ".icinfo"):
-        log += f + " skip" + "\n"
-        return log
+    # if k % 10 == 0:
+    #     print(f"{k} / {nfiles}")
 
-    if os.path.exists(f + ".tfrecord.npy"):
-        log += f + " npy exists" + "\n"
-        return log
+    log = ""
+
+    # if not os.path.exists(f + ".cinfo") or not os.path.exists(f + ".icinfo"):
+    #     log += f + " skip" + "\n"
+    #     return log
+
+    # if os.path.exists(f + ".tfrecord.npy"):
+    #     log += f + " npy exists" + "\n"
+    #     return log
 
     cmd = "/home/dev/miniconda/envs/py27/bin/python /home/dev/code/rgn/data_processing/convert_to_proteinnet.py " + f
     log += cmd + "\n"
@@ -54,6 +58,9 @@ def main():
             if k % 1000 == 0:
                 print(f"{k} / {len(fasta_files)}, files {len(files)}")
 
+            if (f + ".cinfo") not in all_files or (f + ".icinfo") not in all_files:
+                continue
+
             if (f + ".tfrecord") in all_files:
                 continue
 
@@ -61,7 +68,10 @@ def main():
     else:
         files = fasta_files
 
+    files.reverse()
+
     sequential = False
+    parallel = False
     ray = True
 
     if sequential:
@@ -69,27 +79,50 @@ def main():
             f = files[k]
             process_file(f, k, len(files))
 
+    if parallel:
+        from joblib import Parallel, delayed
+
+        Parallel(n_jobs=3, backend="multiprocessing")(delayed(process_file)(files[k], k, len(files)) for k in range(len(files)))
+
     if ray:
         import ray
 
-        @ray.remote(num_cpus=1)
+        @ray.remote(num_cpus=.5)
         def ray_process_files(f, k, nfiles):
             return process_file(f, k, nfiles)
 
-        ray.init(address='10.2.0.4:10000', redis_password='emergent')
+        ray.init(address='10.2.0.8:10000', redis_password='emergent')
 
         ids = []
-        for k in range(len(files)):
+
+        k = 0
+        batch = 500
+        while k < len(files) and batch > 0:
             f = files[k]
             ids.append(ray_process_files.remote(f, k, len(files)))
+            k += 1
+            batch -= 1
 
         while True:
             ready, not_ready = ray.wait(ids)
-            print(f'Not ready {len(not_ready)}, ready: {len(ready)}')
+            print(f'Not ready {len(not_ready)}, ready: {len(ready)}, k {k}, files {len(files)} remaining {len(files) - k + len(not_ready)}')
             for r in ready:
-                print(ray.get(r))
+                try:
+                    print(ray.get(r))
+                except Exception as ex:
+                    print("Exception on ray get")
+                    print(ex)
 
             ids = not_ready
+
+            if len(ids) < 100:
+                batch = 400
+                while k < len(files) and batch > 0:
+                    f = files[k]
+                    ids.append(ray_process_files.remote(f, k, len(files)))
+                    k += 1
+                    batch -= 1
+
             if not ids:
                 break
 

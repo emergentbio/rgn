@@ -38,13 +38,15 @@ def process_file(f, k, nfiles):
 def main():
     print(f"multiprocessing.cpu_count {multiprocessing.cpu_count()}")
 
-    fasta_files = glob.glob("/d/rgn_processing/fasta_files/*.fasta")
+    fasta_files_filter = "/d/rgn_processing2/fasta_files/*.fasta"
+
+    fasta_files = glob.glob(fasta_files_filter)
     print(f"fasta files {len(fasta_files)}")
 
     pre_process = True
 
     if pre_process:
-        all_files = set(glob.glob("/d/rgn_processing/fasta_files/*.fasta*"))
+        all_files = set(glob.glob(fasta_files_filter + "*"))
         print(f"all files {len(all_files)}")
 
         files = []
@@ -99,17 +101,35 @@ def main():
         ray.init(address='10.2.0.4:10000', redis_password='emergent')
 
         ids = []
-        for k in range(len(files)):
+
+        k = 0
+        batch = 500
+        while k < len(files) and batch > 0:
             f = files[k]
             ids.append(ray_process_files.remote(f, k, len(files)))
+            k += 1
+            batch -= 1
 
         while True:
             ready, not_ready = ray.wait(ids)
-            print(f'Not ready {len(not_ready)}, ready: {len(ready)}')
+            print(f'Not ready {len(not_ready)}, ready: {len(ready)}, k {k}, files {len(files)} remaining {len(files) - k + len(not_ready)}')
             for r in ready:
-                print(ray.get(r))
+                try:
+                    print(ray.get(r))
+                except Exception as ex:
+                    print("Exception on ray get")
+                    print(ex)
 
             ids = not_ready
+
+            if len(ids) < 100:
+                batch = 400
+                while k < len(files) and batch > 0:
+                    f = files[k]
+                    ids.append(ray_process_files.remote(f, k, len(files)))
+                    k += 1
+                    batch -= 1
+
             if not ids:
                 break
 
