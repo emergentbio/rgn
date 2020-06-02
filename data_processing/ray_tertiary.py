@@ -44,13 +44,15 @@ def process_file(f, k, nfiles):
 def main():
     print(f"multiprocessing.cpu_count {multiprocessing.cpu_count()}")
 
-    fasta_files = glob.glob("/d/rgn_processing/fasta_files/*.fasta")
+    fasta_files_filter = "/d/rgn_processing2/fasta_files/*.fasta"
+
+    fasta_files = glob.glob(fasta_files_filter)
     print(f"fasta files {len(fasta_files)}")
 
     pre_process = True
 
     if pre_process:
-        all_files = set(glob.glob("/d/rgn_processing/fasta_files/*.fasta*"))
+        all_files = set(glob.glob(fasta_files_filter + "*"))
         print(f"all files {len(all_files)}")
 
         files = []

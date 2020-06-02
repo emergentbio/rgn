@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # input_path = sys.argv[1]
     # output_path = sys.argv[2]
 
-    input_path = "/d/rgn_processing/fasta_files/"
+    input_path = "/d/rgn_processing2/fasta_files/"
     output_path = "/home/dev/RGN7/data/ProteinNet7Thinning90/testing/1"
     print "getting tfrecords from", input_path
     list = glob.glob(input_path + "/*.tfrecord")
