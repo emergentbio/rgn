@@ -18,13 +18,28 @@ python ~/dev/rgn/data_processing/convert_to_proteinnet.py {file.fasta} # this us
 
 python ~/dev/rgn/data_processing/convert_to_tfrecord.py {file.fasta}.proteinnet {file.fasta}.tfrecord 42 
 
-# merge_tfrecord.py
-# docker image from using /d stuff
+# the next step merges multiple tfrecord using merge_tfrecord.py
+
+# call run.sh, that using docker-compose specifies parameters on nvidia docker image and
+# just runs a command to generate teriary structure and exists
 
 </pre>
 
 ## Prerequisites
 
+Please ensure that you have latest docker and docker-compose, following the installations from the official website:
+- https://docs.docker.com/engine/install/ubuntu/
+- https://docs.docker.com/compose/install/
+There are plenty of other versions, apt standard is old, snap installed versions kind of are latest as well, but the
+official ones are preferred. 
+
+On docker, install https://github.com/NVIDIA/nvidia-container-runtime, do the /etc/docker/daemon.json change or creation
+and
+<pre>
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+</pre>
+ 
 Download the pretrained model:
 - from https://github.com/aqlaboratory/rgn
 - download: https://sharehost.hms.harvard.edu/sysbio/alquraishi/rgn_models/RGN7.tar.gz
