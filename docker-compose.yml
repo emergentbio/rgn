@@ -13,10 +13,24 @@ services:
    args:
      buildno: 1
   environment:
-    - NVIDIA_VISIBLE_DEVICES=all
+    NVIDIA_VISIBLE_DEVICES: all
+    PYTHONPATH: "/opt/project"
+    PYTHONUNBUFFERED: "1"
+    PYTHONIOENCODING: "UTF-8"
   volumes:
-   - ".:/app:rw"
-   - "/d:/d:rw"
-   - "/home:/home:rw"
-  ports:
-   - "2222:22"
+   - "..:/dev:rw"
+#  ports:
+#   - "2222:22" # in case we have ssh in Dockerfile
+  command:
+    - "python"
+    - "-u"
+    - "/dev/rgn/model/protling.py"
+    - "/dev/RGN7/runs/CASP7/ProteinNet7Thinning90/configuration"
+    - "-d"
+    - "/dev/RGN7"
+    - "-p"
+    - "-e"
+    - "weighted_testing"
+    - "-g0"
+  stdin_open: true
+  working_dir: "/dev/rgn/model"
